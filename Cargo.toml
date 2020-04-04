@@ -1,0 +1,16 @@
+[package]
+name = "templar"
+version = "0.1.0"
+authors = ["kostas"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dev-dependencies]
+assert_cmd = "0.12"
+predicates = "1.0.4"
+indoc = "0.3"
+
+[dependencies]
+dirs = "2.0"
+tempfile = "3.1.0"
