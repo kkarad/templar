@@ -1,7 +1,8 @@
 use std::env;
-use std::process;
 use std::path::PathBuf;
+
 extern crate dirs;
+
 mod conf;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -14,112 +15,103 @@ struct Release {
     tweet: String,
     pvt_line_range: String,
     jiras: Vec<String>,
-    wip_jiras: Vec<String>
+    wip_jiras: Vec<String>,
 }
 
 fn main() {
-    let mut args: Vec<String> = env::args().collect();
-    let home_dir = find_long_option_value(&args, "--home").unwrap_or_else(|err| {
-        error(&err);
-        process::exit(1);
+    std::process::exit(match run() {
+        Ok(_) => 0,
+        Err(err) => {
+            eprintln!("error: {}", err);
+            eprintln!("For more information try --help");
+            1
+        }
     });
+}
+
+fn run() -> Result<(), String> {
+    let mut args: Vec<String> = env::args().collect();
+    let home_dir = find_long_option_value(&mut args, "--home")?;
     conf::init(home_dir.map(|p| PathBuf::from(p)).or(dirs::home_dir()));
-    
+
     if args.len() <= 1 {
-        return ;
+        return Ok(());
     } else if let Some(_) = args.iter().find(|&x| x.eq("-h") || x.eq("--help")) {
         println!("{}", usage());
-        return;
+        return Ok(());
     } else if let Some(_) = args.iter().find(|&x| x.eq("--version")) {
         println!("Templar version: {}", VERSION);
-        return;
+        return Ok(());
     }
 
     args.remove(0);
     let is_release = !args[0].starts_with('-');
     if !is_release {
-        error(&format!("Found unknown argument '{}'", args[0]));
-        process::exit(1);
+        return Err(format!("Found unknown argument '{}'", args[0]));
     }
-    
+
     let release_name = args[0].to_owned();
-    let current_version = find_option_value(&args, "-c", "--current").unwrap_or_else(|err| {
-        error(&err);
-        process::exit(1);
-    });
-    let next_version = find_option_value(&args, "-n", "--next").unwrap_or_else(|err| {
-        error(&err);
-        process::exit(1);
-    });
-    let tweet = find_option_value(&args, "-t", "--tweet").unwrap_or_else(|err| {
-        error(&err);
-        process::exit(1);
-    });
-    let pvt_line_range = find_option_value(&args, "-p", "--pvt-line-range").unwrap_or_else(|err| {
-        error(&err);
-        process::exit(1);
-    });
-    let jiras = find_option_values(&args, "-j", "--jiras").unwrap_or_else(|err| {
-        error(&err);
-        process::exit(1);
-    });
-    let wip_jiras = find_option_values(&args, "-w", "--wip-jiras").unwrap_or_else(|err| {
-        error(&err);
-        process::exit(1);
-    });
+    let current_version = find_option_value(&mut args, "-c", "--current")?;
+    let next_version = find_option_value(&mut args, "-n", "--next")?;
+    let tweet = find_option_value(&mut args, "-t", "--tweet")?;
+    let pvt_line_range = find_option_value(&mut args, "-p", "--pvt-line-range")?;
+    let jiras: Option<Vec<String>> = find_option_values(&mut args, "-j", "--jiras")?;
+    let wip_jiras: Option<Vec<String>> = find_option_values(&mut args, "-w", "--wip-jiras")?;
     let release = Release {
-            name: release_name
-            , current_version: current_version.unwrap_or("1".to_string())
-            , next_version: next_version.unwrap_or("2".to_string())
-            , tweet: tweet.unwrap_or("default tweet".to_string())
-            , pvt_line_range: pvt_line_range.unwrap_or("10-20".to_string())
-            , jiras: jiras.unwrap_or(vec![])
-            , wip_jiras: wip_jiras.unwrap_or(vec![])
+        name: release_name,
+        current_version: current_version.unwrap_or("1".to_string()),
+        next_version: next_version.unwrap_or("2".to_string()),
+        tweet: tweet.unwrap_or("default tweet".to_string()),
+        pvt_line_range: pvt_line_range.unwrap_or("10-20".to_string()),
+        jiras: jiras.unwrap_or(vec![]),
+        wip_jiras: wip_jiras.unwrap_or(vec![]),
     };
     let is_parse = args.iter().find(|&x| x.eq("--parse")).is_some();
     if is_parse {
         println!("{:?}", release);
     }
+    Ok(())
 }
 
-fn error(msg: &str) {
-    eprintln!("error: {}", msg);
-    eprintln!("For more information try --help");
-}
-
-fn find_long_option_value(args: &Vec<String>, long: &str) -> Result<Option<String>, String> {
+fn find_long_option_value(args: &mut Vec<String>, long: &str) -> Result<Option<String>, String> {
     return find_option_value(args, "", long);
 }
 
-fn find_option_value(args: &Vec<String>, short:  &str, long: &str) -> Result<Option<String>, String> {
-    let mut iter = args.iter();
-    if let Some(option) = iter.find(|&x| (short != "" && x.eq(short)) || x.eq(long)) {
-        let value_token = iter.next().filter(|v| !v.starts_with('-'));
-        return match value_token { 
-            Some(v) => Ok(Some(v.to_string())),
-            None => Err(format!("Missing option value for: {}", option)),
+fn find_option_value(args: &mut Vec<String>, short: &str, long: &str) -> Result<Option<String>, String> {
+    let result = find_option_values(args, short, long)?;
+    if let Some(values) = result {
+        return match values.as_slice() {
+            [] => Ok(None),
+            [value] => Ok(Some(value.to_string())),
+            _ => Err(format!("Found more than one values: {:?}", values)),
         };
-    } else{
-        return Ok(None)
     }
+    return Ok(None);
 }
 
-fn find_option_values(args: &Vec<String>, short:  &str, long: &str) -> Result<Option<Vec<String>>, String> {
+fn find_option_values(args: &mut Vec<String>, short: &str, long: &str) -> Result<Option<Vec<String>>, String> {
     let mut iter = args.iter();
-    if let Some(option) = iter.find(|&x| x.eq(short) || x.eq(long)) {
+    let mut value_indices: Vec<usize> = vec![];
+    return if let Some(flag_index) = iter.position(|x| (!x.is_empty() && x.eq(short)) || x.eq(long)) {
+        let option = args.get(flag_index).unwrap();
         let mut values: Vec<String> = vec![];
-        while let Some(value) = iter.next() {
-            if !value.starts_with("-") {
-                values.push(value.to_string());
-            }
+        let mut index = flag_index + 1;
+        while let Some(value) = args.get(index) {
+            if value.starts_with("-") { break; }
+            values.push(value.to_owned());
+            value_indices.push(index);
+            index += 1;
         }
-        return match values[..] { 
-            [] => Err(format!("Missing option value(s) for: {}", option)),
-            _ => Ok(Some(values)),
-        };
+        if values.is_empty() {
+            return Err(format!("Missing option value(s) for: {}", option));
+        }
+        let original_len = args.len();
+        args.remove(flag_index);
+        for i in value_indices { args.remove(i - (original_len - args.len())); }
+        Ok(Some(values))
     } else {
-        return Ok(None)
-    }
+        Ok(None)
+    };
 }
 
 //Usage format based on: http://docopt.org/

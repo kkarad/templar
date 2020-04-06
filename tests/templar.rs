@@ -58,7 +58,7 @@ fn validate_missing_current_short_option_value() {
     cmd.arg("test").arg("-c").arg("--parse");
     cmd.assert()
         .failure()
-        .stderr(predicate::str::starts_with("error: Missing option value for: -c"));
+        .stderr(predicate::str::starts_with("error: Missing option value(s) for: -c"));
 }
 
 #[test]
@@ -67,7 +67,7 @@ fn validate_missing_current_long_option_value() {
     cmd.arg("test").arg("--current").arg("--parse");
     cmd.assert()
         .failure()
-        .stderr(predicate::str::starts_with("error: Missing option value for: --current"));
+        .stderr(predicate::str::starts_with("error: Missing option value(s) for: --current"));
 }
 
 #[test]
@@ -96,7 +96,7 @@ fn validate_missing_next_short_option_value() {
     cmd.arg("test").arg("-n").arg("--parse");
     cmd.assert()
         .failure()
-        .stderr(predicate::str::starts_with("error: Missing option value for: -n"));
+        .stderr(predicate::str::starts_with("error: Missing option value(s) for: -n"));
 }
 
 #[test]
@@ -105,7 +105,7 @@ fn validate_missing_next_long_option_value() {
     cmd.arg("test").arg("--next").arg("--parse");
     cmd.assert()
         .failure()
-        .stderr(predicate::str::starts_with("error: Missing option value for: --next"));
+        .stderr(predicate::str::starts_with("error: Missing option value(s) for: --next"));
 }
 
 #[test]
@@ -134,7 +134,7 @@ fn validate_missing_tweet_short_option_value() {
     cmd.arg("test").arg("-t").arg("--parse");
     cmd.assert()
         .failure()
-        .stderr(predicate::str::starts_with("error: Missing option value for: -t"));
+        .stderr(predicate::str::starts_with("error: Missing option value(s) for: -t"));
 }
 
 #[test]
@@ -143,7 +143,7 @@ fn validate_missing_tweet_long_option_value() {
     cmd.arg("test").arg("--tweet").arg("--parse");
     cmd.assert()
         .failure()
-        .stderr(predicate::str::starts_with("error: Missing option value for: --tweet"));
+        .stderr(predicate::str::starts_with("error: Missing option value(s) for: --tweet"));
 }
 
 #[test]
@@ -172,7 +172,7 @@ fn validate_missing_pvt_short_option_value() {
     cmd.arg("test").arg("-p").arg("--parse");
     cmd.assert()
         .failure()
-        .stderr(predicate::str::starts_with("error: Missing option value for: -p"));
+        .stderr(predicate::str::starts_with("error: Missing option value(s) for: -p"));
 }
 
 #[test]
@@ -181,7 +181,7 @@ fn validate_missing_pvt_long_option_value() {
     cmd.arg("test").arg("--pvt-line-range").arg("--parse");
     cmd.assert()
         .failure()
-        .stderr(predicate::str::starts_with("error: Missing option value for: --pvt-line-range"));
+        .stderr(predicate::str::starts_with("error: Missing option value(s) for: --pvt-line-range"));
 }
 
 #[test]
