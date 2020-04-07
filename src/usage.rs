@@ -9,7 +9,7 @@ Options:
     --version       Show version
     --home <path>   Override user's home directory (where '.templar' configuration resides)
 "#;
-    return usage.to_string();
+    usage.to_string()
 }
 
 pub fn release() -> String {
@@ -29,5 +29,5 @@ Options:
     -w, --wip-jiras <jira...>       The work in progress jiras in the released [default: ]
     --parse                         Parses release options and prints them without creating the release
 "#;
-    return usage.to_string();
+    usage.to_string()
 }

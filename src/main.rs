@@ -7,7 +7,7 @@ mod option;
 mod usage;
 mod conf;
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Debug)]
 struct Release {
@@ -38,7 +38,7 @@ fn run() -> Result<(), String> {
     let (mut general_args, mut command_args) = option::split_args(args, commands);
 
     let home_dir = option::find_long_value(&mut general_args, "--home")?;
-    conf::init(home_dir.map(|p| PathBuf::from(p)).or(dirs::home_dir()));
+    conf::init(home_dir.map(PathBuf::from).or_else(dirs::home_dir));
 
     if option::find(&mut general_args, "-h", "--help")? {
         println!("{}", usage::main());
@@ -50,11 +50,11 @@ fn run() -> Result<(), String> {
 
     let command = command_args.first().ok_or("No command specified")?.to_owned();
     command_args.remove(0);
-    return if command.eq(&"release".to_string()) {
+    if command.eq(&"release".to_string()) {
         handle_release(&mut command_args.to_vec())
     } else {
         Err(format!("Unknown command '{}'", command))
-    };
+    }
 }
 
 fn handle_release(args: &mut Vec<String>) -> Result<(), String> {
@@ -71,12 +71,12 @@ fn handle_release(args: &mut Vec<String>) -> Result<(), String> {
     let wip_jiras: Option<Vec<String>> = option::find_values(args, "-w", "--wip-jiras")?;
     let release = Release {
         name: release_name,
-        current_version: current_version.unwrap_or("1".to_string()),
-        next_version: next_version.unwrap_or("2".to_string()),
-        tweet: tweet.unwrap_or("default tweet".to_string()),
-        pvt_line_range: pvt_line_range.unwrap_or("10-20".to_string()),
-        jiras: jiras.unwrap_or(vec![]),
-        wip_jiras: wip_jiras.unwrap_or(vec![]),
+        current_version: current_version.unwrap_or_else(||"1".to_string()),
+        next_version: next_version.unwrap_or_else(||"2".to_string()),
+        tweet: tweet.unwrap_or_else(||"default tweet".to_string()),
+        pvt_line_range: pvt_line_range.unwrap_or_else(||"10-20".to_string()),
+        jiras: jiras.unwrap_or_else(||vec![]),
+        wip_jiras: wip_jiras.unwrap_or_else(||vec![]),
     };
     if option::find_long(args, "--parse")? {
         println!("{:?}", release);

@@ -12,6 +12,6 @@ pub fn init(home_dir: Option<PathBuf>) {
 }
 
 fn default_conf() -> String {
-    return r#"# Templar Configuration    
-"#.to_string();
+    r#"# Templar Configuration
+"#.to_string()
 }
