@@ -1,10 +1,12 @@
 extern crate tempfile;
 
+use std::path::PathBuf;
 use std::process::Command;
+
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use tempfile::TempDir;
-use std::path::PathBuf;
+
 use indoc::indoc;
 
 #[test]
@@ -28,14 +30,14 @@ fn version() {
 #[test]
 fn release() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("--parse");
+    cmd.arg("release").arg("test").arg("--parse");
     cmd.assert().success().stdout(predicate::str::starts_with("Release { name: \"test\", "));
 }
 
 #[test]
 fn parse_current_short_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("-c").arg("1.1").arg("--parse");
+    cmd.arg("release").arg("test").arg("-c").arg("1.1").arg("--parse");
     cmd.assert()
         .success()
         .stdout(predicate::str::starts_with("Release { name: \"test\", "))
@@ -45,7 +47,7 @@ fn parse_current_short_option_value() {
 #[test]
 fn parse_current_long_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("--current").arg("1.1").arg("--parse");
+    cmd.arg("release").arg("test").arg("--current").arg("1.1").arg("--parse");
     cmd.assert()
         .success()
         .stdout(predicate::str::starts_with("Release { name: \"test\", "))
@@ -55,7 +57,7 @@ fn parse_current_long_option_value() {
 #[test]
 fn validate_missing_current_short_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("-c").arg("--parse");
+    cmd.arg("release").arg("test").arg("-c").arg("--parse");
     cmd.assert()
         .failure()
         .stderr(predicate::str::starts_with("error: Missing option value(s) for: -c"));
@@ -64,7 +66,7 @@ fn validate_missing_current_short_option_value() {
 #[test]
 fn validate_missing_current_long_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("--current").arg("--parse");
+    cmd.arg("release").arg("test").arg("--current").arg("--parse");
     cmd.assert()
         .failure()
         .stderr(predicate::str::starts_with("error: Missing option value(s) for: --current"));
@@ -73,7 +75,7 @@ fn validate_missing_current_long_option_value() {
 #[test]
 fn parse_next_short_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("-n").arg("1.2").arg("--parse");
+    cmd.arg("release").arg("test").arg("-n").arg("1.2").arg("--parse");
     cmd.assert()
         .success()
         .stdout(predicate::str::starts_with("Release { name: \"test\", "))
@@ -83,7 +85,7 @@ fn parse_next_short_option_value() {
 #[test]
 fn parse_next_long_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("--next").arg("1.2").arg("--parse");
+    cmd.arg("release").arg("test").arg("--next").arg("1.2").arg("--parse");
     cmd.assert()
         .success()
         .stdout(predicate::str::starts_with("Release { name: \"test\", "))
@@ -93,7 +95,7 @@ fn parse_next_long_option_value() {
 #[test]
 fn validate_missing_next_short_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("-n").arg("--parse");
+    cmd.arg("release").arg("test").arg("-n").arg("--parse");
     cmd.assert()
         .failure()
         .stderr(predicate::str::starts_with("error: Missing option value(s) for: -n"));
@@ -102,7 +104,7 @@ fn validate_missing_next_short_option_value() {
 #[test]
 fn validate_missing_next_long_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("--next").arg("--parse");
+    cmd.arg("release").arg("test").arg("--next").arg("--parse");
     cmd.assert()
         .failure()
         .stderr(predicate::str::starts_with("error: Missing option value(s) for: --next"));
@@ -111,7 +113,7 @@ fn validate_missing_next_long_option_value() {
 #[test]
 fn parse_tweet_short_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("-t").arg("hello!").arg("--parse");
+    cmd.arg("release").arg("test").arg("-t").arg("hello!").arg("--parse");
     cmd.assert()
         .success()
         .stdout(predicate::str::starts_with("Release { name: \"test\", "))
@@ -121,7 +123,7 @@ fn parse_tweet_short_option_value() {
 #[test]
 fn parse_tweet_long_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("--tweet").arg("hello!").arg("--parse");
+    cmd.arg("release").arg("test").arg("--tweet").arg("hello!").arg("--parse");
     cmd.assert()
         .success()
         .stdout(predicate::str::starts_with("Release { name: \"test\", "))
@@ -131,7 +133,7 @@ fn parse_tweet_long_option_value() {
 #[test]
 fn validate_missing_tweet_short_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("-t").arg("--parse");
+    cmd.arg("release").arg("test").arg("-t").arg("--parse");
     cmd.assert()
         .failure()
         .stderr(predicate::str::starts_with("error: Missing option value(s) for: -t"));
@@ -140,7 +142,7 @@ fn validate_missing_tweet_short_option_value() {
 #[test]
 fn validate_missing_tweet_long_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("--tweet").arg("--parse");
+    cmd.arg("release").arg("test").arg("--tweet").arg("--parse");
     cmd.assert()
         .failure()
         .stderr(predicate::str::starts_with("error: Missing option value(s) for: --tweet"));
@@ -149,7 +151,7 @@ fn validate_missing_tweet_long_option_value() {
 #[test]
 fn parse_pvt_short_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("-p").arg("70-90").arg("--parse");
+    cmd.arg("release").arg("test").arg("-p").arg("70-90").arg("--parse");
     cmd.assert()
         .success()
         .stdout(predicate::str::starts_with("Release { name: \"test\", "))
@@ -159,7 +161,7 @@ fn parse_pvt_short_option_value() {
 #[test]
 fn parse_pvt_long_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("--pvt-line-range").arg("70-90").arg("--parse");
+    cmd.arg("release").arg("test").arg("--pvt-line-range").arg("70-90").arg("--parse");
     cmd.assert()
         .success()
         .stdout(predicate::str::starts_with("Release { name: \"test\", "))
@@ -169,7 +171,7 @@ fn parse_pvt_long_option_value() {
 #[test]
 fn validate_missing_pvt_short_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("-p").arg("--parse");
+    cmd.arg("release").arg("test").arg("-p").arg("--parse");
     cmd.assert()
         .failure()
         .stderr(predicate::str::starts_with("error: Missing option value(s) for: -p"));
@@ -178,7 +180,7 @@ fn validate_missing_pvt_short_option_value() {
 #[test]
 fn validate_missing_pvt_long_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("--pvt-line-range").arg("--parse");
+    cmd.arg("release").arg("test").arg("--pvt-line-range").arg("--parse");
     cmd.assert()
         .failure()
         .stderr(predicate::str::starts_with("error: Missing option value(s) for: --pvt-line-range"));
@@ -187,7 +189,7 @@ fn validate_missing_pvt_long_option_value() {
 #[test]
 fn parse_jiras_short_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("-j").arg("JIRA-1").arg("JIRA-2").arg("--parse");
+    cmd.arg("release").arg("test").arg("-j").arg("JIRA-1").arg("JIRA-2").arg("--parse");
     cmd.assert()
         .success()
         .stdout(predicate::str::starts_with("Release { name: \"test\", "))
@@ -197,7 +199,7 @@ fn parse_jiras_short_option_value() {
 #[test]
 fn parse_jiras_long_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("--jiras").arg("JIRA-1").arg("JIRA-2").arg("--parse");
+    cmd.arg("release").arg("test").arg("--jiras").arg("JIRA-1").arg("JIRA-2").arg("--parse");
     cmd.assert()
         .success()
         .stdout(predicate::str::starts_with("Release { name: \"test\", "))
@@ -207,7 +209,7 @@ fn parse_jiras_long_option_value() {
 #[test]
 fn validate_missing_jiras_short_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("-j").arg("--parse");
+    cmd.arg("release").arg("test").arg("-j").arg("--parse");
     cmd.assert()
         .failure()
         .stderr(predicate::str::starts_with("error: Missing option value(s) for: -j"));
@@ -216,7 +218,7 @@ fn validate_missing_jiras_short_option_value() {
 #[test]
 fn validate_missing_jiras_long_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("--jiras").arg("--parse");
+    cmd.arg("release").arg("test").arg("--jiras").arg("--parse");
     cmd.assert()
         .failure()
         .stderr(predicate::str::starts_with("error: Missing option value(s) for: --jiras"));
@@ -225,7 +227,7 @@ fn validate_missing_jiras_long_option_value() {
 #[test]
 fn parse_wip_jiras_short_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("-w").arg("JIRA-1").arg("JIRA-2").arg("--parse");
+    cmd.arg("release").arg("test").arg("-w").arg("JIRA-1").arg("JIRA-2").arg("--parse");
     cmd.assert()
         .success()
         .stdout(predicate::str::starts_with("Release { name: \"test\", "))
@@ -235,7 +237,7 @@ fn parse_wip_jiras_short_option_value() {
 #[test]
 fn parse_wip_jiras_long_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("--wip-jiras").arg("JIRA-1").arg("JIRA-2").arg("--parse");
+    cmd.arg("release").arg("test").arg("--wip-jiras").arg("JIRA-1").arg("JIRA-2").arg("--parse");
     cmd.assert()
         .success()
         .stdout(predicate::str::starts_with("Release { name: \"test\", "))
@@ -245,7 +247,7 @@ fn parse_wip_jiras_long_option_value() {
 #[test]
 fn validate_missing_wip_jiras_short_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("-w").arg("--parse");
+    cmd.arg("release").arg("test").arg("-w").arg("--parse");
     cmd.assert()
         .failure()
         .stderr(predicate::str::starts_with("error: Missing option value(s) for: -w"));
@@ -254,7 +256,7 @@ fn validate_missing_wip_jiras_short_option_value() {
 #[test]
 fn validate_missing_wip_jiras_long_option_value() {
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("test").arg("--wip-jiras").arg("--parse");
+    cmd.arg("release").arg("test").arg("--wip-jiras").arg("--parse");
     cmd.assert()
         .failure()
         .stderr(predicate::str::starts_with("error: Missing option value(s) for: --wip-jiras"));
@@ -263,16 +265,16 @@ fn validate_missing_wip_jiras_long_option_value() {
 // to view println: cargo test -- --nocapture
 #[test]
 fn conf_file_is_created_with_default_content_when_it_does_not_exists() {
-    let tmp_dir = TempDir::new().expect("temp_dir failed");
-    let tmp_dir = tmp_dir.path().to_str().unwrap();
-    println!("Temp home_dir: {}", tmp_dir);
+    let tmp_dir = TempDir::new().expect("temp_dir creation failed");
+    let tmp_dir_name = tmp_dir.path().to_str().unwrap();
+    println!("Temp home_dir: {}", tmp_dir_name);
 
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("--home").arg(tmp_dir).arg("--version");
+    cmd.arg("--home").arg(tmp_dir_name).arg("release").arg("test");
     cmd.assert().success();
 
-    let conf_file: PathBuf = [tmp_dir, ".templar.toml"].iter().collect();
-    assert!(conf_file.exists(), "file doesn't exist");
+    let conf_file: PathBuf = [tmp_dir_name, ".templar.toml"].iter().collect();
+    assert!(conf_file.exists(), format!("file doesn't exist: {:?}", conf_file));
 
     let res = std::fs::read_to_string(conf_file);
     assert!(res.is_ok());

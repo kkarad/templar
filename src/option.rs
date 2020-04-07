@@ -1,5 +1,14 @@
 use crate::option::OptionType::{List, Value, Flag};
 
+pub fn split_args(args: Vec<String>, commands: Vec<String>) -> (Vec<String>, Vec<String>) {
+    if let Some(index) = args.iter().position(|item| commands.contains(item)) {
+        let (general_args, command_args) = args.split_at(index);
+        (general_args.to_vec(), command_args.to_vec())
+    } else {
+        (args, vec![])
+    }
+}
+
 #[derive(PartialEq, Eq)]
 enum OptionType {
     Flag,

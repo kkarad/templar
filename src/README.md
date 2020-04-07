@@ -20,6 +20,7 @@ TODO
 
 COMPLETED
 
+# use commands (first one is release) to distringuish different actions and enable general args
 # test default configuration file: tempfile?
 # create default toml configuration file if it doesn't exist
 # parse cli option: -w or --wip-jiras

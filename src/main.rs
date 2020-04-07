@@ -34,17 +34,19 @@ fn main() {
 fn run() -> Result<(), String> {
     let mut args: Vec<String> = env::args().collect();
     args.remove(0); //remove executable name
-    let (mut global_args, mut command_args) = split_args(args);
-    if option::find(&mut global_args, "-h", "--help")? {
+    let commands = vec!["release".to_string()];
+    let (mut general_args, mut command_args) = option::split_args(args, commands);
+
+    let home_dir = option::find_long_value(&mut general_args, "--home")?;
+    conf::init(home_dir.map(|p| PathBuf::from(p)).or(dirs::home_dir()));
+
+    if option::find(&mut general_args, "-h", "--help")? {
         println!("{}", usage::main());
         return Ok(());
-    } else if option::find_long(&mut global_args, "--version")? {
+    } else if option::find_long(&mut general_args, "--version")? {
         println!("Templar version: {}", VERSION);
         return Ok(());
     }
-
-    let home_dir = option::find_long_value(&mut global_args, "--home")?;
-    conf::init(home_dir.map(|p| PathBuf::from(p)).or(dirs::home_dir()));
 
     let command = command_args.first().ok_or("No command specified")?.to_owned();
     command_args.remove(0);
@@ -53,16 +55,6 @@ fn run() -> Result<(), String> {
     } else {
         Err(format!("Unknown command '{}'", command))
     };
-}
-
-fn split_args(args: Vec<String>) -> (Vec<String>, Vec<String>) {
-    let commands: Vec<String> = vec!["release".to_string()];
-    if let Some(index) = args.iter().position(|item| commands.contains(item)) {
-        let (global_args, command_args) = args.split_at(index);
-        (global_args.to_vec(), command_args.to_vec())
-    } else {
-        (args, vec![])
-    }
 }
 
 fn handle_release(args: &mut Vec<String>) -> Result<(), String> {
