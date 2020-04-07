@@ -6,6 +6,7 @@ REFERENCES
 
 TODO
 
+# distinguish global to command arguments so that we can parse home_dir argument
 # validate release name from configuration file (https://rust-lang-nursery.github.io/rust-cookbook/encoding/complex.html)
 # read default release template from configuration file and print it as json
 # apply string interpolation taken from Release struct to release template
@@ -19,7 +20,7 @@ TODO
 
 COMPLETED
 
-# test default configuration file: tempgile?
+# test default configuration file: tempfile?
 # create default toml configuration file if it doesn't exist
 # parse cli option: -w or --wip-jiras
 # parse cli option: -j or --jiras

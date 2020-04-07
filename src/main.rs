@@ -3,6 +3,8 @@ use std::path::PathBuf;
 
 extern crate dirs;
 
+mod option;
+mod usage;
 mod conf;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -31,32 +33,50 @@ fn main() {
 
 fn run() -> Result<(), String> {
     let mut args: Vec<String> = env::args().collect();
-    let home_dir = find_long_option_value(&mut args, "--home")?;
-    conf::init(home_dir.map(|p| PathBuf::from(p)).or(dirs::home_dir()));
-
-    if args.len() <= 1 {
+    args.remove(0); //remove executable name
+    let (mut global_args, mut command_args) = split_args(args);
+    if option::find(&mut global_args, "-h", "--help")? {
+        println!("{}", usage::main());
         return Ok(());
-    } else if let Some(_) = args.iter().find(|&x| x.eq("-h") || x.eq("--help")) {
-        println!("{}", usage());
-        return Ok(());
-    } else if let Some(_) = args.iter().find(|&x| x.eq("--version")) {
+    } else if option::find_long(&mut global_args, "--version")? {
         println!("Templar version: {}", VERSION);
         return Ok(());
     }
 
-    args.remove(0);
-    let is_release = !args[0].starts_with('-');
-    if !is_release {
-        return Err(format!("Found unknown argument '{}'", args[0]));
-    }
+    let home_dir = option::find_long_value(&mut global_args, "--home")?;
+    conf::init(home_dir.map(|p| PathBuf::from(p)).or(dirs::home_dir()));
 
-    let release_name = args[0].to_owned();
-    let current_version = find_option_value(&mut args, "-c", "--current")?;
-    let next_version = find_option_value(&mut args, "-n", "--next")?;
-    let tweet = find_option_value(&mut args, "-t", "--tweet")?;
-    let pvt_line_range = find_option_value(&mut args, "-p", "--pvt-line-range")?;
-    let jiras: Option<Vec<String>> = find_option_values(&mut args, "-j", "--jiras")?;
-    let wip_jiras: Option<Vec<String>> = find_option_values(&mut args, "-w", "--wip-jiras")?;
+    let command = command_args.first().ok_or("No command specified")?.to_owned();
+    command_args.remove(0);
+    return if command.eq(&"release".to_string()) {
+        handle_release(&mut command_args.to_vec())
+    } else {
+        Err(format!("Unknown command '{}'", command))
+    };
+}
+
+fn split_args(args: Vec<String>) -> (Vec<String>, Vec<String>) {
+    let commands: Vec<String> = vec!["release".to_string()];
+    if let Some(index) = args.iter().position(|item| commands.contains(item)) {
+        let (global_args, command_args) = args.split_at(index);
+        (global_args.to_vec(), command_args.to_vec())
+    } else {
+        (args, vec![])
+    }
+}
+
+fn handle_release(args: &mut Vec<String>) -> Result<(), String> {
+    if option::find(args, "-h", "--help")? {
+        println!("{}", usage::release());
+        return Ok(());
+    }
+    let release_name = args.first().ok_or("Release name is missing")?.to_owned();
+    let current_version = option::find_value(args, "-c", "--current")?;
+    let next_version = option::find_value(args, "-n", "--next")?;
+    let tweet = option::find_value(args, "-t", "--tweet")?;
+    let pvt_line_range = option::find_value(args, "-p", "--pvt-line-range")?;
+    let jiras: Option<Vec<String>> = option::find_values(args, "-j", "--jiras")?;
+    let wip_jiras: Option<Vec<String>> = option::find_values(args, "-w", "--wip-jiras")?;
     let release = Release {
         name: release_name,
         current_version: current_version.unwrap_or("1".to_string()),
@@ -66,75 +86,8 @@ fn run() -> Result<(), String> {
         jiras: jiras.unwrap_or(vec![]),
         wip_jiras: wip_jiras.unwrap_or(vec![]),
     };
-    let is_parse = args.iter().find(|&x| x.eq("--parse")).is_some();
-    if is_parse {
+    if option::find_long(args, "--parse")? {
         println!("{:?}", release);
     }
     Ok(())
-}
-
-fn find_long_option_value(args: &mut Vec<String>, long: &str) -> Result<Option<String>, String> {
-    return find_option_value(args, "", long);
-}
-
-fn find_option_value(args: &mut Vec<String>, short: &str, long: &str) -> Result<Option<String>, String> {
-    let result = find_option_values(args, short, long)?;
-    if let Some(values) = result {
-        return match values.as_slice() {
-            [] => Ok(None),
-            [value] => Ok(Some(value.to_string())),
-            _ => Err(format!("Found more than one values: {:?}", values)),
-        };
-    }
-    return Ok(None);
-}
-
-fn find_option_values(args: &mut Vec<String>, short: &str, long: &str) -> Result<Option<Vec<String>>, String> {
-    let mut iter = args.iter();
-    let mut value_indices: Vec<usize> = vec![];
-    return if let Some(flag_index) = iter.position(|x| (!x.is_empty() && x.eq(short)) || x.eq(long)) {
-        let option = args.get(flag_index).unwrap();
-        let mut values: Vec<String> = vec![];
-        let mut index = flag_index + 1;
-        while let Some(value) = args.get(index) {
-            if value.starts_with("-") { break; }
-            values.push(value.to_owned());
-            value_indices.push(index);
-            index += 1;
-        }
-        if values.is_empty() {
-            return Err(format!("Missing option value(s) for: {}", option));
-        }
-        let original_len = args.len();
-        args.remove(flag_index);
-        for i in value_indices { args.remove(i - (original_len - args.len())); }
-        Ok(Some(values))
-    } else {
-        Ok(None)
-    };
-}
-
-//Usage format based on: http://docopt.org/
-fn usage() -> String {
-    let usage = r#"Templar.
-
-Usage:
-    templar <name> [-c |-n|-t|-p|-j|-w|--parse]
-    templar -h | --help 
-    templar --version
-
-Options:
-    -h, --help                  Show this screen
-    --version                   Show version
-    -c, --current CURRENT       Current release version [default: 1]
-    -n, --next NEXT             Next release version [default: 2]
-    -t, --tweet TWEET           Release short description [default: default tweet]
-    -p, --pvt-line-range PVT    The PVT line range [default: 10-20]
-    -j, --jiras JIRAS...        The jiras released [default: ]
-    -w, --wip-jiras   JIRAS...  The work in progress jiras in the released [default: ]
-    --parse                     Parses release options and prints them
-    --home                      Override user's home directory (where '.templar' configuration resides)
-"#;
-
-    return usage.to_string();
 }
