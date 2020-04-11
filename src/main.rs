@@ -1,11 +1,11 @@
-use std::env;
-use std::path::PathBuf;
-
 extern crate dirs;
-
 mod option;
 mod usage;
 mod conf;
+
+use std::env;
+use std::path::PathBuf;
+use conf::Conf;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -37,8 +37,9 @@ fn run() -> Result<(), String> {
     let commands = vec!["release".to_string()];
     let (mut general_args, mut command_args) = option::split_args(args, commands);
 
-    let home_dir = option::find_long_value(&mut general_args, "--home")?;
-    conf::init(home_dir.map(PathBuf::from).or_else(dirs::home_dir));
+    let home_dir = option::find_long_value(&mut general_args, "--home")?
+        .map(PathBuf::from).or_else(dirs::home_dir).ok_or("Unable to locate home directory")?;
+    let conf = conf::init(home_dir)?;
 
     if option::find(&mut general_args, "-h", "--help")? {
         println!("{}", usage::main());
@@ -51,18 +52,19 @@ fn run() -> Result<(), String> {
     let command = command_args.first().ok_or("No command specified")?.to_owned();
     command_args.remove(0);
     if command.eq(&"release".to_string()) {
-        handle_release(&mut command_args.to_vec())
+        handle_release(conf, &mut command_args.to_vec())
     } else {
         Err(format!("Unknown command '{}'", command))
     }
 }
 
-fn handle_release(args: &mut Vec<String>) -> Result<(), String> {
+fn handle_release(conf: Conf, args: &mut Vec<String>) -> Result<(), String> {
     if option::find(args, "-h", "--help")? {
         println!("{}", usage::release());
         return Ok(());
     }
     let release_name = args.first().ok_or("Release name is missing")?.to_owned();
+    if !conf.release_exists(&release_name) { return Err(format!("Unknown release: {}", release_name)); }
     let current_version = option::find_value(args, "-c", "--current")?;
     let next_version = option::find_value(args, "-n", "--next")?;
     let tweet = option::find_value(args, "-t", "--tweet")?;

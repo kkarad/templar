@@ -6,10 +6,9 @@ REFERENCES
 
 TODO
 
-# distinguish global to command arguments so that we can parse home_dir argument
-# validate release name from configuration file (https://rust-lang-nursery.github.io/rust-cookbook/encoding/complex.html)
+# make all tests independent - override home_dir on every test invocation and stop relying on user's home dir
 # read default release template from configuration file and print it as json
-# apply string interpolation taken from Release struct to release template
+# apply string interpolation taken from Release struct to release template -> https://docs.rs/crate/toml/0.4.1/source/examples/toml2json.rs
 # ...
 # populate jira from git commits
 # populate tweet from jira description
@@ -20,7 +19,8 @@ TODO
 
 COMPLETED
 
-# use commands (first one is release) to distringuish different actions and enable general args
+# validate release name from configuration file (https://rust-lang-nursery.github.io/rust-cookbook/encoding/complex.html)
+# use commands (first one is release) to distinguish different actions and enable general args
 # test default configuration file: tempfile?
 # create default toml configuration file if it doesn't exist
 # parse cli option: -w or --wip-jiras

@@ -1,6 +1,6 @@
 extern crate tempfile;
 
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use std::process::Command;
 
 use assert_cmd::prelude::*;
@@ -11,7 +11,9 @@ use indoc::indoc;
 
 #[test]
 fn help() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
+
     cmd.arg("-h");
     cmd.assert().success().stdout(predicate::str::contains("Usage:"));
 
@@ -21,22 +23,26 @@ fn help() {
 
 #[test]
 fn version() {
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
+
     let expected = format!("Templar version: {}\n", env!("CARGO_PKG_VERSION"));
-    let mut cmd = Command::cargo_bin("templar").unwrap();
     cmd.arg("--version");
     cmd.assert().success().stdout(predicate::str::similar(expected));
 }
 
 #[test]
 fn release() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("--parse");
     cmd.assert().success().stdout(predicate::str::starts_with("Release { name: \"test\", "));
 }
 
 #[test]
 fn parse_current_short_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("-c").arg("1.1").arg("--parse");
     cmd.assert()
         .success()
@@ -46,7 +52,8 @@ fn parse_current_short_option_value() {
 
 #[test]
 fn parse_current_long_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("--current").arg("1.1").arg("--parse");
     cmd.assert()
         .success()
@@ -56,7 +63,8 @@ fn parse_current_long_option_value() {
 
 #[test]
 fn validate_missing_current_short_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("-c").arg("--parse");
     cmd.assert()
         .failure()
@@ -65,7 +73,8 @@ fn validate_missing_current_short_option_value() {
 
 #[test]
 fn validate_missing_current_long_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("--current").arg("--parse");
     cmd.assert()
         .failure()
@@ -74,7 +83,8 @@ fn validate_missing_current_long_option_value() {
 
 #[test]
 fn parse_next_short_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("-n").arg("1.2").arg("--parse");
     cmd.assert()
         .success()
@@ -84,7 +94,8 @@ fn parse_next_short_option_value() {
 
 #[test]
 fn parse_next_long_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("--next").arg("1.2").arg("--parse");
     cmd.assert()
         .success()
@@ -94,7 +105,8 @@ fn parse_next_long_option_value() {
 
 #[test]
 fn validate_missing_next_short_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("-n").arg("--parse");
     cmd.assert()
         .failure()
@@ -103,7 +115,8 @@ fn validate_missing_next_short_option_value() {
 
 #[test]
 fn validate_missing_next_long_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("--next").arg("--parse");
     cmd.assert()
         .failure()
@@ -112,7 +125,8 @@ fn validate_missing_next_long_option_value() {
 
 #[test]
 fn parse_tweet_short_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("-t").arg("hello!").arg("--parse");
     cmd.assert()
         .success()
@@ -122,7 +136,8 @@ fn parse_tweet_short_option_value() {
 
 #[test]
 fn parse_tweet_long_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("--tweet").arg("hello!").arg("--parse");
     cmd.assert()
         .success()
@@ -132,7 +147,8 @@ fn parse_tweet_long_option_value() {
 
 #[test]
 fn validate_missing_tweet_short_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("-t").arg("--parse");
     cmd.assert()
         .failure()
@@ -141,7 +157,8 @@ fn validate_missing_tweet_short_option_value() {
 
 #[test]
 fn validate_missing_tweet_long_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("--tweet").arg("--parse");
     cmd.assert()
         .failure()
@@ -150,7 +167,8 @@ fn validate_missing_tweet_long_option_value() {
 
 #[test]
 fn parse_pvt_short_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("-p").arg("70-90").arg("--parse");
     cmd.assert()
         .success()
@@ -160,7 +178,8 @@ fn parse_pvt_short_option_value() {
 
 #[test]
 fn parse_pvt_long_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("--pvt-line-range").arg("70-90").arg("--parse");
     cmd.assert()
         .success()
@@ -170,7 +189,8 @@ fn parse_pvt_long_option_value() {
 
 #[test]
 fn validate_missing_pvt_short_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("-p").arg("--parse");
     cmd.assert()
         .failure()
@@ -179,7 +199,8 @@ fn validate_missing_pvt_short_option_value() {
 
 #[test]
 fn validate_missing_pvt_long_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("--pvt-line-range").arg("--parse");
     cmd.assert()
         .failure()
@@ -188,7 +209,8 @@ fn validate_missing_pvt_long_option_value() {
 
 #[test]
 fn parse_jiras_short_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("-j").arg("JIRA-1").arg("JIRA-2").arg("--parse");
     cmd.assert()
         .success()
@@ -198,7 +220,8 @@ fn parse_jiras_short_option_value() {
 
 #[test]
 fn parse_jiras_long_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("--jiras").arg("JIRA-1").arg("JIRA-2").arg("--parse");
     cmd.assert()
         .success()
@@ -208,7 +231,8 @@ fn parse_jiras_long_option_value() {
 
 #[test]
 fn validate_missing_jiras_short_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("-j").arg("--parse");
     cmd.assert()
         .failure()
@@ -217,7 +241,8 @@ fn validate_missing_jiras_short_option_value() {
 
 #[test]
 fn validate_missing_jiras_long_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("--jiras").arg("--parse");
     cmd.assert()
         .failure()
@@ -226,7 +251,8 @@ fn validate_missing_jiras_long_option_value() {
 
 #[test]
 fn parse_wip_jiras_short_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("-w").arg("JIRA-1").arg("JIRA-2").arg("--parse");
     cmd.assert()
         .success()
@@ -236,7 +262,8 @@ fn parse_wip_jiras_short_option_value() {
 
 #[test]
 fn parse_wip_jiras_long_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("--wip-jiras").arg("JIRA-1").arg("JIRA-2").arg("--parse");
     cmd.assert()
         .success()
@@ -246,7 +273,8 @@ fn parse_wip_jiras_long_option_value() {
 
 #[test]
 fn validate_missing_wip_jiras_short_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("-w").arg("--parse");
     cmd.assert()
         .failure()
@@ -255,7 +283,8 @@ fn validate_missing_wip_jiras_short_option_value() {
 
 #[test]
 fn validate_missing_wip_jiras_long_option_value() {
-    let mut cmd = Command::cargo_bin("templar").unwrap();
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("--wip-jiras").arg("--parse");
     cmd.assert()
         .failure()
@@ -265,15 +294,12 @@ fn validate_missing_wip_jiras_long_option_value() {
 // to view println: cargo test -- --nocapture
 #[test]
 fn conf_file_is_created_with_default_content_when_it_does_not_exists() {
-    let tmp_dir = TempDir::new().expect("temp_dir creation failed");
-    let tmp_dir_name = tmp_dir.path().to_str().unwrap();
-    println!("Temp home_dir: {}", tmp_dir_name);
-
-    let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("--home").arg(tmp_dir_name).arg("release").arg("test");
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
+    cmd.arg("release").arg("test");
     cmd.assert().success();
 
-    let conf_file: PathBuf = [tmp_dir_name, ".templar.toml"].iter().collect();
+    let conf_file: PathBuf = [tmp_dir.path().to_str().unwrap(), ".templar.toml"].iter().collect();
     assert!(conf_file.exists(), format!("file doesn't exist: {:?}", conf_file));
 
     let res = std::fs::read_to_string(conf_file);
@@ -284,19 +310,30 @@ fn conf_file_is_created_with_default_content_when_it_does_not_exists() {
 #[test]
 fn validate_unknown_release_name_during_arg_parsing() {
     let conf = indoc!(r#"
-        [releases]
-
-        [releases.test]
-
+        [[release]]
+        name = "a_release"
     "#);
     let tmp_dir = TempDir::new().expect("temp_dir failed");
-    let tmp_dir = tmp_dir.path().to_str().unwrap();
+    let mut cmd = templar_cmd_with_conf(tmp_dir.path(), conf);
+    cmd.arg("release").arg("unknown_release").arg("--parse");
+    cmd.assert().failure()
+        .stderr(predicate::str::starts_with("error: Unknown release: unknown_release"));
+}
+
+fn templar_cmd_with_default_conf(home_dir: &Path) -> Command {
+    let conf = indoc!(r#"
+        # Templar Configuration
+        [[release]]
+        name = "test"
+    "#);
+    templar_cmd_with_conf(home_dir, conf)
+}
+
+fn templar_cmd_with_conf(home_dir: &Path, conf: &'_ str) -> Command {
+    let tmp_dir = home_dir.to_str().unwrap();
     let conf_file: PathBuf = [tmp_dir, ".templar.toml" ].iter().collect();
     std::fs::write(conf_file, conf).unwrap();
-
     let mut cmd = Command::cargo_bin("templar").unwrap();
-    cmd.arg("--home").arg(tmp_dir).arg("test").arg("--parse");
-    cmd.assert()
-        .failure()
-        .stderr(predicate::str::similar("error: Unknown release: test"));
+    cmd.arg("--home").arg(tmp_dir);
+    cmd
 }
