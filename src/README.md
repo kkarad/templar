@@ -6,7 +6,7 @@ REFERENCES
 
 TODO
 
-# make all tests independent - override home_dir on every test invocation and stop relying on user's home dir
+# Template impl: print an dummy template from 
 # read default release template from configuration file and print it as json
 # apply string interpolation taken from Release struct to release template -> https://docs.rs/crate/toml/0.4.1/source/examples/toml2json.rs
 # ...
@@ -19,6 +19,8 @@ TODO
 
 COMPLETED
 
+# create empty implementation api for release templates
+# make all tests independent - override home_dir on every test invocation and stop relying on user's home dir
 # validate release name from configuration file (https://rust-lang-nursery.github.io/rust-cookbook/encoding/complex.html)
 # use commands (first one is release) to distinguish different actions and enable general args
 # test default configuration file: tempfile?

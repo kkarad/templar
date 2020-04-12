@@ -2,23 +2,15 @@ extern crate dirs;
 mod option;
 mod usage;
 mod conf;
+mod release;
 
 use std::env;
 use std::path::PathBuf;
 use conf::Conf;
+pub use release::Context;
+use crate::release::{Console, Output};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-#[derive(Debug)]
-struct Release {
-    name: String,
-    current_version: String,
-    next_version: String,
-    tweet: String,
-    pvt_line_range: String,
-    jiras: Vec<String>,
-    wip_jiras: Vec<String>,
-}
 
 fn main() {
     std::process::exit(match run() {
@@ -64,24 +56,25 @@ fn handle_release(conf: Conf, args: &mut Vec<String>) -> Result<(), String> {
         return Ok(());
     }
     let release_name = args.first().ok_or("Release name is missing")?.to_owned();
-    if !conf.release_exists(&release_name) { return Err(format!("Unknown release: {}", release_name)); }
+    let release = conf.release(&release_name).ok_or(format!("Unknown release: {}", release_name))?;
     let current_version = option::find_value(args, "-c", "--current")?;
     let next_version = option::find_value(args, "-n", "--next")?;
     let tweet = option::find_value(args, "-t", "--tweet")?;
     let pvt_line_range = option::find_value(args, "-p", "--pvt-line-range")?;
     let jiras: Option<Vec<String>> = option::find_values(args, "-j", "--jiras")?;
     let wip_jiras: Option<Vec<String>> = option::find_values(args, "-w", "--wip-jiras")?;
-    let release = Release {
-        name: release_name,
-        current_version: current_version.unwrap_or_else(||"1".to_string()),
-        next_version: next_version.unwrap_or_else(||"2".to_string()),
-        tweet: tweet.unwrap_or_else(||"default tweet".to_string()),
-        pvt_line_range: pvt_line_range.unwrap_or_else(||"10-20".to_string()),
-        jiras: jiras.unwrap_or_else(||vec![]),
-        wip_jiras: wip_jiras.unwrap_or_else(||vec![]),
-    };
+    let context = Context::new(
+        release_name,
+        current_version.unwrap_or_else(|| "1".to_string()),
+        next_version.unwrap_or_else(|| "2".to_string()),
+        tweet.unwrap_or_else(|| "default tweet".to_string()),
+        pvt_line_range.unwrap_or_else(|| "10-20".to_string()),
+        jiras.unwrap_or_else(|| vec![]),
+        wip_jiras.unwrap_or_else(|| vec![]),
+    );
     if option::find_long(args, "--parse")? {
-        println!("{:?}", release);
+        println!("{:?}", context);
+        return Ok(());
     }
-    Ok(())
+    Console::new().print(release.templates(), context)
 }

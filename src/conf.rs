@@ -5,26 +5,33 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use toml::Value;
+use crate::release::Release;
 
 pub struct Conf {
     toml: Value
 }
 
 impl Conf {
-    pub fn release_exists(&self, name: &String) -> bool {
-        //println!("{:?}", self.toml);
+    pub fn release(&self, name: &str) -> Option<Release> {
         let releases = match self.toml.get("release")
             .and_then(|v| v.as_array()) {
             Some(r) => r,
-            None => return false,
+            None => return None,
         };
         for release in releases {
-            return release.as_table()
+            if let Some(release) = release.as_table()
                 .and_then(|t| t.get("name"))
                 .and_then(|v| v.as_str())
-                .map_or(false, |s| s.eq(name));
+                .and_then(|s|
+                    if s.eq(name) {
+                        Some(Release::new(name))
+                    } else {
+                        None
+                    }) {
+                return Some(release);
+            }
         }
-        false
+        None
     }
 }
 

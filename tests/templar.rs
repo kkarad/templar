@@ -36,7 +36,7 @@ fn release() {
     let tmp_dir = TempDir::new().expect("temp_dir failed");
     let mut cmd = templar_cmd_with_default_conf(tmp_dir.path());
     cmd.arg("release").arg("test").arg("--parse");
-    cmd.assert().success().stdout(predicate::str::starts_with("Release { name: \"test\", "));
+    cmd.assert().success().stdout(predicate::str::starts_with("Context { name: \"test\", "));
 }
 
 #[test]
@@ -46,7 +46,7 @@ fn parse_current_short_option_value() {
     cmd.arg("release").arg("test").arg("-c").arg("1.1").arg("--parse");
     cmd.assert()
         .success()
-        .stdout(predicate::str::starts_with("Release { name: \"test\", "))
+        .stdout(predicate::str::starts_with("Context { name: \"test\", "))
         .stdout(predicate::str::contains("current_version: \"1.1\""));
 }
 
@@ -57,7 +57,7 @@ fn parse_current_long_option_value() {
     cmd.arg("release").arg("test").arg("--current").arg("1.1").arg("--parse");
     cmd.assert()
         .success()
-        .stdout(predicate::str::starts_with("Release { name: \"test\", "))
+        .stdout(predicate::str::starts_with("Context { name: \"test\", "))
         .stdout(predicate::str::contains("current_version: \"1.1\""));
 }
 
@@ -88,7 +88,7 @@ fn parse_next_short_option_value() {
     cmd.arg("release").arg("test").arg("-n").arg("1.2").arg("--parse");
     cmd.assert()
         .success()
-        .stdout(predicate::str::starts_with("Release { name: \"test\", "))
+        .stdout(predicate::str::starts_with("Context { name: \"test\", "))
         .stdout(predicate::str::contains("next_version: \"1.2\""));
 }
 
@@ -99,7 +99,7 @@ fn parse_next_long_option_value() {
     cmd.arg("release").arg("test").arg("--next").arg("1.2").arg("--parse");
     cmd.assert()
         .success()
-        .stdout(predicate::str::starts_with("Release { name: \"test\", "))
+        .stdout(predicate::str::starts_with("Context { name: \"test\", "))
         .stdout(predicate::str::contains("next_version: \"1.2\""));
 }
 
@@ -130,7 +130,7 @@ fn parse_tweet_short_option_value() {
     cmd.arg("release").arg("test").arg("-t").arg("hello!").arg("--parse");
     cmd.assert()
         .success()
-        .stdout(predicate::str::starts_with("Release { name: \"test\", "))
+        .stdout(predicate::str::starts_with("Context { name: \"test\", "))
         .stdout(predicate::str::contains("tweet: \"hello!\""));
 }
 
@@ -141,7 +141,7 @@ fn parse_tweet_long_option_value() {
     cmd.arg("release").arg("test").arg("--tweet").arg("hello!").arg("--parse");
     cmd.assert()
         .success()
-        .stdout(predicate::str::starts_with("Release { name: \"test\", "))
+        .stdout(predicate::str::starts_with("Context { name: \"test\", "))
         .stdout(predicate::str::contains("tweet: \"hello!\""));
 }
 
@@ -172,7 +172,7 @@ fn parse_pvt_short_option_value() {
     cmd.arg("release").arg("test").arg("-p").arg("70-90").arg("--parse");
     cmd.assert()
         .success()
-        .stdout(predicate::str::starts_with("Release { name: \"test\", "))
+        .stdout(predicate::str::starts_with("Context { name: \"test\", "))
         .stdout(predicate::str::contains("pvt_line_range: \"70-90\""));
 }
 
@@ -183,7 +183,7 @@ fn parse_pvt_long_option_value() {
     cmd.arg("release").arg("test").arg("--pvt-line-range").arg("70-90").arg("--parse");
     cmd.assert()
         .success()
-        .stdout(predicate::str::starts_with("Release { name: \"test\", "))
+        .stdout(predicate::str::starts_with("Context { name: \"test\", "))
         .stdout(predicate::str::contains("pvt_line_range: \"70-90\""));
 }
 
@@ -214,7 +214,7 @@ fn parse_jiras_short_option_value() {
     cmd.arg("release").arg("test").arg("-j").arg("JIRA-1").arg("JIRA-2").arg("--parse");
     cmd.assert()
         .success()
-        .stdout(predicate::str::starts_with("Release { name: \"test\", "))
+        .stdout(predicate::str::starts_with("Context { name: \"test\", "))
         .stdout(predicate::str::contains("jiras: [\"JIRA-1\", \"JIRA-2\"]"));
 }
 
@@ -225,7 +225,7 @@ fn parse_jiras_long_option_value() {
     cmd.arg("release").arg("test").arg("--jiras").arg("JIRA-1").arg("JIRA-2").arg("--parse");
     cmd.assert()
         .success()
-        .stdout(predicate::str::starts_with("Release { name: \"test\", "))
+        .stdout(predicate::str::starts_with("Context { name: \"test\", "))
         .stdout(predicate::str::contains("jiras: [\"JIRA-1\", \"JIRA-2\"]"));
 }
 
@@ -256,7 +256,7 @@ fn parse_wip_jiras_short_option_value() {
     cmd.arg("release").arg("test").arg("-w").arg("JIRA-1").arg("JIRA-2").arg("--parse");
     cmd.assert()
         .success()
-        .stdout(predicate::str::starts_with("Release { name: \"test\", "))
+        .stdout(predicate::str::starts_with("Context { name: \"test\", "))
         .stdout(predicate::str::contains("wip_jiras: [\"JIRA-1\", \"JIRA-2\"]"));
 }
 
@@ -267,7 +267,7 @@ fn parse_wip_jiras_long_option_value() {
     cmd.arg("release").arg("test").arg("--wip-jiras").arg("JIRA-1").arg("JIRA-2").arg("--parse");
     cmd.assert()
         .success()
-        .stdout(predicate::str::starts_with("Release { name: \"test\", "))
+        .stdout(predicate::str::starts_with("Context { name: \"test\", "))
         .stdout(predicate::str::contains("wip_jiras: [\"JIRA-1\", \"JIRA-2\"]"));
 }
 
@@ -325,6 +325,11 @@ fn templar_cmd_with_default_conf(home_dir: &Path) -> Command {
         # Templar Configuration
         [[release]]
         name = "test"
+        [[release.template]]
+        region = "LDN"
+        nowVersion = "1"
+        nextVersion = "2"
+        tweet = "default tweet"
     "#);
     templar_cmd_with_conf(home_dir, conf)
 }
