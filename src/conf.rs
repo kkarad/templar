@@ -1,37 +1,20 @@
 extern crate toml;
 
+use serde::Deserialize;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use toml::Value;
 use crate::release::Release;
 
+#[derive(Deserialize, Debug)]
 pub struct Conf {
-    toml: Value
+    releases: Vec<Release>,
 }
 
 impl Conf {
-    pub fn release(&self, name: &str) -> Option<Release> {
-        let releases = match self.toml.get("release")
-            .and_then(|v| v.as_array()) {
-            Some(r) => r,
-            None => return None,
-        };
-        for release in releases {
-            if let Some(release) = release.as_table()
-                .and_then(|t| t.get("name"))
-                .and_then(|v| v.as_str())
-                .and_then(|s|
-                    if s.eq(name) {
-                        Some(Release::new(name))
-                    } else {
-                        None
-                    }) {
-                return Some(release);
-            }
-        }
-        None
+    pub fn release(&self, name: &str) -> Option<&Release> {
+        self.releases.iter().find(|r| r.name.eq(name))
     }
 }
 
@@ -43,16 +26,12 @@ pub fn init(mut home_dir: PathBuf) -> Result<Conf, String> {
     }
     let content = std::fs::read_to_string(conf_file).map_err(|err|
         format!("Unable to read configuration file: {}", err.to_string()))?;
-    let toml: Value = toml::from_str(&content).map_err(|err|
-        format!("Unable to parse toml configuration: {}", err.to_string()))?;
-    Ok(Conf { toml })
+    let conf: Conf = toml::from_str(&content).map_err(|err|
+        format!("Invalid configuration in '{}': {}", conf_file.display(), err.to_string()))?;
+    Ok(conf)
 }
 
 fn default_conf() -> String {
     r#"# Templar Configuration
-
-[[release]]
-name = "test"
-
 "#.to_string()
 }

@@ -310,8 +310,11 @@ fn conf_file_is_created_with_default_content_when_it_does_not_exists() {
 #[test]
 fn validate_unknown_release_name_during_arg_parsing() {
     let conf = indoc!(r#"
-        [[release]]
+        [[releases]]
         name = "a_release"
+        [[releases.templates]]
+        id = "default"
+        [releases.templates.content]
     "#);
     let tmp_dir = TempDir::new().expect("temp_dir failed");
     let mut cmd = templar_cmd_with_conf(tmp_dir.path(), conf);
@@ -320,12 +323,59 @@ fn validate_unknown_release_name_during_arg_parsing() {
         .stderr(predicate::str::starts_with("error: Unknown release: unknown_release"));
 }
 
+#[test]
+fn prints_release_template_without_variable_interpolation() {
+    let conf = indoc!(r#"
+        [[releases]]
+        name = "a_release"
+        [[releases.templates]]
+        id = "default"
+        [releases.templates.content]
+        region = "GLOBAL"
+        tweet = "a_release tweet"
+    "#);
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_conf(tmp_dir.path(), conf);
+    cmd.arg("release").arg("a_release");
+    cmd.assert().success().stdout(predicate::str::similar(
+        "[{\"region\":\"GLOBAL\",\"tweet\":\"a_release tweet\"}]\n"));
+}
+
+#[test]
+fn prints_multiple_release_templates_without_variable_interpolation() {
+    let conf = indoc!(r#"
+        [[releases]]
+        name = "a_release"
+
+        [[releases.templates]]
+        id = "default"
+        [releases.templates.content]
+        region = "GLOBAL"
+        tweet = "a default tweet"
+
+        [[releases.templates]]
+        id = "external"
+        [releases.templates.content]
+        region = "GLOBAL"
+        tweet = "an external tweet"
+    "#);
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_conf(tmp_dir.path(), conf);
+    cmd.arg("release").arg("a_release");
+    cmd.assert().success().stdout(predicate::str::similar(
+        "[{\"region\":\"GLOBAL\",\"tweet\":\"a default tweet\"}, {\"region\":\"GLOBAL\",\"tweet\":\"an external tweet\"}]\n"));
+}
+
 fn templar_cmd_with_default_conf(home_dir: &Path) -> Command {
     let conf = indoc!(r#"
         # Templar Configuration
-        [[release]]
+
+        [[releases]]
         name = "test"
-        [[release.template]]
+
+        [[releases.templates]]
+        id = "default"
+        [releases.templates.content]
         region = "LDN"
         nowVersion = "1"
         nextVersion = "2"

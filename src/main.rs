@@ -76,5 +76,5 @@ fn handle_release(conf: Conf, args: &mut Vec<String>) -> Result<(), String> {
         println!("{:?}", context);
         return Ok(());
     }
-    Console::new().print(release.templates(), context)
+    Console::new().print(release.templates(), &context)
 }
