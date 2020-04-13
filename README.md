@@ -6,9 +6,7 @@ REFERENCES
 
 TODO
 
-# Template impl: print an dummy template from 
-# read default release template from configuration file and print it as json
-# apply string interpolation taken from Release struct to release template -> https://docs.rs/crate/toml/0.4.1/source/examples/toml2json.rs
+# apply string interpolation taken from Release struct to release template
 # ...
 # populate jira from git commits
 # populate tweet from jira description
@@ -19,6 +17,8 @@ TODO
 
 COMPLETED
 
+# read default release template from configuration file and print it as json
+# Template impl: print a dummy template from a release 
 # create empty implementation api for release templates
 # make all tests independent - override home_dir on every test invocation and stop relying on user's home dir
 # validate release name from configuration file (https://rust-lang-nursery.github.io/rust-cookbook/encoding/complex.html)
