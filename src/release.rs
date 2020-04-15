@@ -34,25 +34,32 @@ pub struct Template {
 }
 
 impl Template {
-    pub fn print(&self, _ctx: &Context) -> String {
-        format!("{}",Template::convert(&self.content))
+    pub fn print(&self, ctx: &Context) -> String {
+        format!("{}",Template::convert(&self.content, ctx))
     }
 
-    fn convert(toml: &Toml) -> Json {
+    fn convert(toml: &Toml, ctx: &Context) -> Json {
         match toml {
-            Toml::String(s) => Json::String(s.to_owned()),
+            Toml::String(s) => Json::String(Template::interpolate(s.to_owned(), ctx)),
             Toml::Integer(i) => Json::Number((*i).into()),
             Toml::Float(f) => {
                 let n = serde_json::Number::from_f64(*f).expect("float infinite and nan not allowed");
                 Json::Number(n)
             }
             Toml::Boolean(b) => Json::Bool(*b),
-            Toml::Array(arr) => Json::Array(arr.iter().map(Template::convert).collect()),
+            Toml::Array(arr) => Json::Array(arr.iter().map(|v| Template::convert(v, ctx)).collect()),
             Toml::Table(table) => {
-                Json::Object(table.into_iter().map(|(k, v)| (k.to_owned(), Template::convert(v))).collect())
+                Json::Object(table.into_iter().map(|(k, v)| (k.to_owned(), Template::convert(v, ctx))).collect())
             }
             Toml::Datetime(dt) => Json::String(dt.to_string()),
         }
+    }
+
+    fn interpolate(text: String, ctx: &Context) -> String {
+        text.replace("{now-version}", ctx.current_version.as_str())
+            .replace("{next-version}", ctx.next_version.as_str())
+            .replace("{tweet}", ctx.tweet.as_str())
+            .replace("{pvt-line-range}", ctx.pvt_line_range.as_str())
     }
 }
 

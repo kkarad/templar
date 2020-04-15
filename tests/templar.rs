@@ -342,6 +342,36 @@ fn prints_release_template_without_variable_interpolation() {
 }
 
 #[test]
+fn prints_release_template_with_string_interpolation() {
+    let conf = indoc!(r#"
+        [[releases]]
+        name = "a_release"
+        [[releases.templates]]
+        id = "default"
+        [releases.templates.content]
+        now-version = "{now-version}"
+        next-version = "{next-version}"
+        tweet = "{tweet}"
+        business-verification = [
+            "This release is independent",
+            "PVT: https://github.com/kkarad/repos/templar/master/src/pvt.rs#{pvt-line-range}"
+        ]
+    "#);
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_conf(tmp_dir.path(), conf);
+    cmd.arg("release").arg("a_release")
+        .arg("-c").arg("1.21")
+        .arg("-n").arg("1.22")
+        .arg("-t").arg("this is a tweet")
+        .arg("-p").arg("12-28");
+    cmd.assert().success().stdout(predicate::str::contains("\"now-version\":\"1.21\"")
+        .and(predicate::str::contains("\"next-version\":\"1.22\""))
+        .and(predicate::str::contains("\"tweet\":\"this is a tweet\""))
+        .and(predicate::str::contains("\"PVT: https://github.com/kkarad/repos/templar/master/src/pvt.rs#12-28\""))
+    );
+}
+
+#[test]
 fn prints_multiple_release_templates_without_variable_interpolation() {
     let conf = indoc!(r#"
         [[releases]]
