@@ -35,7 +35,24 @@ pub struct Template {
 
 impl Template {
     pub fn print(&self, ctx: &Context) -> String {
-        format!("{}",Template::convert(&self.content, ctx))
+        let mut json = Template::convert(&self.content, ctx);
+        if let Some(template) = json.as_object_mut() {
+            if let Some(jiras) = template.entry("jiras")
+                .or_insert_with(|| Json::Array(vec![]))
+                .as_array_mut() {
+                for jira in &ctx.jiras {
+                    jiras.push(Json::String(jira.to_owned()))
+                }
+            }
+            if let Some(wip_jiras) = template.entry("wip-jiras")
+                .or_insert_with(|| Json::Array(vec![]))
+                .as_array_mut() {
+                for jira in &ctx.wip_jiras {
+                    wip_jiras.push(Json::String(jira.to_owned()))
+                }
+            }
+        }
+        format!("{}", json)
     }
 
     fn convert(toml: &Toml, ctx: &Context) -> Json {

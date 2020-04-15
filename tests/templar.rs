@@ -337,8 +337,9 @@ fn prints_release_template_without_variable_interpolation() {
     let tmp_dir = TempDir::new().expect("temp_dir failed");
     let mut cmd = templar_cmd_with_conf(tmp_dir.path(), conf);
     cmd.arg("release").arg("a_release");
-    cmd.assert().success().stdout(predicate::str::similar(
-        "[{\"region\":\"GLOBAL\",\"tweet\":\"a_release tweet\"}]\n"));
+    cmd.assert().success().stdout(predicate::str::contains("\"region\":\"GLOBAL\"")
+        .and(predicate::str::contains("\"tweet\":\"a_release tweet\""))
+    );
 }
 
 #[test]
@@ -372,6 +373,63 @@ fn prints_release_template_with_string_interpolation() {
 }
 
 #[test]
+fn prints_release_template_insert_empty_jiras() {
+    let conf = indoc!(r#"
+        [[releases]]
+        name = "a_release"
+        [[releases.templates]]
+        id = "default"
+        [releases.templates.content]
+    "#);
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_conf(tmp_dir.path(), conf);
+    cmd.arg("release").arg("a_release");
+    cmd.assert().success().stdout(predicate::str::contains("\"jiras\":[]")
+        .and(predicate::str::contains("\"wip-jiras\":[]"))
+    );
+}
+
+#[test]
+fn prints_release_template_insert_jiras() {
+    let conf = indoc!(r#"
+        [[releases]]
+        name = "a_release"
+        [[releases.templates]]
+        id = "default"
+        [releases.templates.content]
+    "#);
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_conf(tmp_dir.path(), conf);
+    cmd.arg("release").arg("a_release")
+        .arg("-j").arg("JR-1").arg("JR-2")
+        .arg("-w").arg("JR-3").arg("JR-4");
+    cmd.assert().success().stdout(predicate::str::contains("\"jiras\":[\"JR-1\",\"JR-2\"]")
+        .and(predicate::str::contains("\"wip-jiras\":[\"JR-3\",\"JR-4\"]"))
+    );
+}
+
+#[test]
+fn prints_release_template_append_jiras() {
+    let conf = indoc!(r#"
+        [[releases]]
+        name = "a_release"
+        [[releases.templates]]
+        id = "default"
+        [releases.templates.content]
+        jiras = ["JR-0"]
+        wip-jiras = ["JR-5"]
+    "#);
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_conf(tmp_dir.path(), conf);
+    cmd.arg("release").arg("a_release")
+        .arg("-j").arg("JR-1").arg("JR-2")
+        .arg("-w").arg("JR-3").arg("JR-4");
+    cmd.assert().success().stdout(predicate::str::contains("\"jiras\":[\"JR-0\",\"JR-1\",\"JR-2\"]")
+        .and(predicate::str::contains("\"wip-jiras\":[\"JR-5\",\"JR-3\",\"JR-4\"]"))
+    );
+}
+
+#[test]
 fn prints_multiple_release_templates_without_variable_interpolation() {
     let conf = indoc!(r#"
         [[releases]]
@@ -392,8 +450,14 @@ fn prints_multiple_release_templates_without_variable_interpolation() {
     let tmp_dir = TempDir::new().expect("temp_dir failed");
     let mut cmd = templar_cmd_with_conf(tmp_dir.path(), conf);
     cmd.arg("release").arg("a_release");
-    cmd.assert().success().stdout(predicate::str::similar(
-        "[{\"region\":\"GLOBAL\",\"tweet\":\"a default tweet\"}, {\"region\":\"GLOBAL\",\"tweet\":\"an external tweet\"}]\n"));
+    cmd.assert().success().stdout(predicate::str::contains("[{")
+        .and(predicate::str::contains("\"region\":\"GLOBAL\""))
+        .and(predicate::str::contains("\"tweet\":\"a default tweet\""))
+        .and(predicate::str::contains("}, {"))
+        .and(predicate::str::contains("\"region\":\"GLOBAL\""))
+        .and(predicate::str::contains("\"tweet\":\"an external tweet\""))
+        .and(predicate::str::contains("}]"))
+    );
 }
 
 fn templar_cmd_with_default_conf(home_dir: &Path) -> Command {
@@ -416,7 +480,7 @@ fn templar_cmd_with_default_conf(home_dir: &Path) -> Command {
 
 fn templar_cmd_with_conf(home_dir: &Path, conf: &'_ str) -> Command {
     let tmp_dir = home_dir.to_str().unwrap();
-    let conf_file: PathBuf = [tmp_dir, ".templar.toml" ].iter().collect();
+    let conf_file: PathBuf = [tmp_dir, ".templar.toml"].iter().collect();
     std::fs::write(conf_file, conf).unwrap();
     let mut cmd = Command::cargo_bin("templar").unwrap();
     cmd.arg("--home").arg(tmp_dir);

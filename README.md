@@ -6,9 +6,12 @@
 
 ### TODO
 
-* apply string interpolation taken from Release struct to release template
-
+* inject release-date date time with value 'now'  
+* cli arg/option to output release json to a file
 * ...
+* remove home dir override and use conf override instead
+* allow heredoc conf override/release template
+* cli options to provide predefined release-date patterns
 * populate jira from git commits
 * populate tweet from jira description
 * find current and next version from ssm uat and latest git tag
@@ -18,6 +21,9 @@
 
 ### COMPLETED
 
+* append (if they exist) jiras and wip-jiras arrays
+* populate jiras and wip-jiras arrays
+* apply string interpolation taken from release::Context struct to release::Template
 * read default release template from configuration file and print it as json
 * Template impl: print a dummy template from a release 
 * create empty implementation api for release templates
