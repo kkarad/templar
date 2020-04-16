@@ -1,6 +1,9 @@
+extern crate chrono;
+
 use serde::Deserialize;
 use serde_json::Value as Json;
 use toml::Value as Toml;
+use chrono::Utc;
 
 #[derive(Debug)]
 pub struct Context {
@@ -22,8 +25,16 @@ impl Context {
                pvt_line_range: String,
                jiras: Vec<String>,
                wip_jiras: Vec<String>) -> Context {
-        Context { name, current_version, next_version, tweet, pvt_line_range, jiras, wip_jiras,
-            _secret: () }
+        Context {
+            name,
+            current_version,
+            next_version,
+            tweet,
+            pvt_line_range,
+            jiras,
+            wip_jiras,
+            _secret: (),
+        }
     }
 }
 
@@ -49,6 +60,12 @@ impl Template {
                 .as_array_mut() {
                 for jira in &ctx.wip_jiras {
                     wip_jiras.push(Json::String(jira.to_owned()))
+                }
+            }
+            if let Json::String(date) = template.entry("release-date")
+                .or_insert_with(|| Json::String(String::from(""))) {
+                if date.is_empty() { date.push_str(
+                    Utc::now().format("%Y-%m-%d %H:%M:%S").to_string().as_str())
                 }
             }
         }
@@ -83,7 +100,7 @@ impl Template {
 #[derive(Deserialize, Debug)]
 pub struct Release {
     pub name: String,
-    templates: Vec<Template>
+    templates: Vec<Template>,
 }
 
 impl Release {

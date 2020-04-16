@@ -8,6 +8,7 @@ use predicates::prelude::*;
 use tempfile::TempDir;
 
 use indoc::indoc;
+use chrono::Utc;
 
 #[test]
 fn help() {
@@ -387,6 +388,39 @@ fn prints_release_template_insert_empty_jiras() {
     cmd.assert().success().stdout(predicate::str::contains("\"jiras\":[]")
         .and(predicate::str::contains("\"wip-jiras\":[]"))
     );
+}
+
+#[test]
+fn prints_release_template_and_insert_release_date() {
+    let conf = indoc!(r#"
+        [[releases]]
+        name = "a_release"
+        [[releases.templates]]
+        id = "default"
+        [releases.templates.content]
+    "#);
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_conf(tmp_dir.path(), conf);
+    cmd.arg("release").arg("a_release");
+    let date = Utc::now().format("%Y-%m-%d").to_string();
+    cmd.assert().success().stdout(predicate::str::contains(format!("\"release-date\":\"{}", date)));
+}
+
+#[test]
+fn prints_release_template_and_populate_release_date() {
+    let conf = indoc!(r#"
+        [[releases]]
+        name = "a_release"
+        [[releases.templates]]
+        id = "default"
+        [releases.templates.content]
+        release-date = ""
+    "#);
+    let tmp_dir = TempDir::new().expect("temp_dir failed");
+    let mut cmd = templar_cmd_with_conf(tmp_dir.path(), conf);
+    cmd.arg("release").arg("a_release");
+    let date = Utc::now().format("%Y-%m-%d").to_string();
+    cmd.assert().success().stdout(predicate::str::contains(format!("\"release-date\":\"{}", date)));
 }
 
 #[test]
